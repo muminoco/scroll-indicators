@@ -105,7 +105,7 @@ export function setupClickHandlers(container, scrollableElement, clickTargets, d
       event.preventDefault();
       event.stopPropagation();
       
-      const customScrollAmount = clickTarget.getAttribute(ATTRIBUTES.SCROLL);
+      const customScrollAmount = clickTarget.getAttribute(ATTRIBUTES.CLICK_DISTANCE);
       const scrollAmount = customScrollAmount || (CONFIG.DEFAULT_SCROLL.SCROLL_TO_END ? 'end' : CONFIG.DEFAULT_SCROLL.FIXED_AMOUNT);
       
       performScroll(scrollableElement, direction, scrollAmount, position, container);

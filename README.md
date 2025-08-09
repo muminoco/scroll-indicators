@@ -1,8 +1,5 @@
 # Scroll Indicators
 
-## TODO BEFORE PUBLISHING
-Reread this Readme, confirm how it is, and give much better suggested CSS.
-
 A lightweight JavaScript module for Webflow and other no-code platforms that automatically shows/hides overflow indicators based on scroll position. Perfect for horizontal scrolling galleries, carousels, and any scrollable content where users need visual feedback about available content.
 
 ## Features

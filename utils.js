@@ -212,6 +212,36 @@ export function parseScrollAmount(scrollAmount, element, direction, container) {
 }
 
 /**
+ * Check if element is visible and has dimensions
+ */
+export function isElementVisible(element) {
+  if (!element) return false;
+  
+  const rect = element.getBoundingClientRect();
+  const style = window.getComputedStyle(element);
+  
+  return rect.width > 0 && rect.height > 0 && 
+         style.display !== 'none' && 
+         style.visibility !== 'hidden' && 
+         style.opacity !== '0';
+}
+
+/**
+ * Debounce function for performance optimization
+ */
+export function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
  * Perform scroll action
  */
 export function performScroll(element, direction, scrollAmount, indicatorPosition, container) {

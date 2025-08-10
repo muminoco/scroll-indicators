@@ -88,11 +88,16 @@ function setupScrollContainer(container) {
     }
   });
   
-  // Setup scroll listener
-  setupScrollListener(container, scrollableElement, validIndicators, validClickTargets, direction);
+  // Setup scroll listener (now returns cleanup function)
+  const cleanupScrollListener = setupScrollListener(container, scrollableElement, validIndicators, validClickTargets, direction);
   
   // Setup click handlers if enabled
   setupClickHandlers(container, scrollableElement, validClickTargets, direction);
+  
+  // Store cleanup function on container for potential future cleanup
+  if (cleanupScrollListener) {
+    container._scrollIndicatorsCleanup = cleanupScrollListener;
+  }
   
   log(`Container setup complete: ${direction} scrolling, ${validIndicators.length} indicators, ${validClickTargets.length} click targets`, 'log', container);
   return true;
@@ -186,5 +191,29 @@ if (document.readyState === 'loading') {
   initializeScrollIndicators();
 }
 
-// Export for manual initialization if needed
-export { initializeScrollIndicators };
+/**
+ * Cleanup all scroll indicators and their listeners
+ */
+function cleanupScrollIndicators() {
+  log('Cleaning up scroll indicators...');
+  
+  const containers = findScrollContainers();
+  let cleanupCount = 0;
+  
+  containers.forEach(container => {
+    if (container._scrollIndicatorsCleanup) {
+      try {
+        container._scrollIndicatorsCleanup();
+        delete container._scrollIndicatorsCleanup;
+        cleanupCount++;
+      } catch (error) {
+        log(`Error cleaning up container: ${error.message}`, 'error', container);
+      }
+    }
+  });
+  
+  log(`Cleanup complete: ${cleanupCount} containers cleaned up`);
+}
+
+// Export for manual initialization and cleanup if needed
+export { initializeScrollIndicators, cleanupScrollIndicators };

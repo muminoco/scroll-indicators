@@ -1,10 +1,15 @@
 import { CONFIG, ATTRIBUTES } from './config.js';
-import { log, isAtStart, isAtEnd, validatePosition, validateClickTargetPosition, performScroll } from './utils.js';
+import { log, isAtStart, isAtEnd, validatePosition, validateClickTargetPosition, performScroll, isElementVisible, debounce } from './utils.js';
 
 /**
  * Update visibility of indicators and click targets based on scroll position
  */
 export function updateIndicatorVisibility(container, scrollableElement, indicators, clickTargets, direction) {
+  // Skip calculations if element is not visible
+  if (!isElementVisible(scrollableElement)) {
+    return false;
+  }
+  
   const atStart = isAtStart(scrollableElement, direction);
   const atEnd = isAtEnd(scrollableElement, direction);
   
@@ -57,6 +62,53 @@ export function updateIndicatorVisibility(container, scrollableElement, indicato
       clickTarget.classList.add(CONFIG.CSS_CLASSES.HIDDEN);
     }
   });
+  
+  return true;
+}
+
+/**
+ * Setup resize listener for a container
+ */
+export function setupResizeListener(container, scrollableElement, indicators, clickTargets, direction) {
+  const handleResize = debounce(() => {
+    // Only update if the element is visible
+    if (isElementVisible(scrollableElement)) {
+      updateIndicatorVisibility(container, scrollableElement, indicators, clickTargets, direction);
+    }
+  }, 150); // 150ms debounce
+  
+  window.addEventListener('resize', handleResize);
+  
+  // Return cleanup function
+  return () => {
+    window.removeEventListener('resize', handleResize);
+  };
+}
+
+/**
+ * Setup visibility observer for hidden elements
+ */
+export function setupVisibilityObserver(container, scrollableElement, indicators, clickTargets, direction) {
+  if (!window.IntersectionObserver) {
+    log('IntersectionObserver not supported, skipping visibility detection', 'warn');
+    return null;
+  }
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0) {
+        // Element is now visible, update indicators
+        updateIndicatorVisibility(container, scrollableElement, indicators, clickTargets, direction);
+      }
+    });
+  }, {
+    threshold: 0.01 // Trigger when even 1% is visible
+  });
+  
+  observer.observe(scrollableElement);
+  
+  // Return cleanup function
+  return () => observer.disconnect();
 }
 
 /**
@@ -77,10 +129,25 @@ export function setupScrollListener(container, scrollableElement, indicators, cl
   
   scrollableElement.addEventListener('scroll', handleScroll);
   
-  // Set initial visibility
-  updateIndicatorVisibility(container, scrollableElement, indicators, clickTargets, direction);
+  // Set initial visibility - this now returns a boolean
+  const initialSuccess = updateIndicatorVisibility(container, scrollableElement, indicators, clickTargets, direction);
+  
+  // Setup resize listener
+  const cleanupResize = setupResizeListener(container, scrollableElement, indicators, clickTargets, direction);
+  
+  // If initial setup failed (element hidden), setup visibility observer
+  let cleanupVisibility = null;
+  if (!initialSuccess) {
+    cleanupVisibility = setupVisibilityObserver(container, scrollableElement, indicators, clickTargets, direction);
+  }
   
   log(`Scroll listener setup complete for ${direction} scrolling`, 'log', container);
+  
+  // Return cleanup function for all listeners
+  return () => {
+    cleanupResize();
+    if (cleanupVisibility) cleanupVisibility();
+  };
 }
 
 /**

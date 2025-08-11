@@ -1,4 +1,4 @@
-import { CONFIG, ATTRIBUTES } from './config.js';
+import { ATTRIBUTES } from './config.js';
 import { log, findScrollContainers, findScrollableElement, findIndicators, findClickTargets, validateDirection } from './utils.js';
 import { setupScrollListener, setupClickHandlers } from './events.js';
 
